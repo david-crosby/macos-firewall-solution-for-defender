@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>PayloadContent</key>
+    <array>
+        <dict>
+            <key>PayloadDisplayName</key>
+            <string>Firewall Configuration</string>
+            <key>PayloadIdentifier</key>
+            <string>com.company.firewall.config</string>
+            <key>PayloadType</key>
+            <string>com.apple.security.firewall</string>
+            <key>PayloadUUID</key>
+            <string>REPLACE-WITH-UUID-1</string>
+            <key>PayloadVersion</key>
+            <integer>1</integer>
+            
+            <key>EnableFirewall</key>
+            <true/>
+            
+            <key>BlockAllIncoming</key>
+            <false/>
+            
+            <key>EnableStealthMode</key>
+            <true/>
+            
+            <key>AllowSignedEnabled</key>
+            <integer>1</integer>
+            
+            <key>AllowBuiltInSoftware</key>
+            <true/>
+            
+            <key>AllowDownloadSignedEnabled</key>
+            <integer>1</integer>
+            
+            <key>Applications</key>
+            <array>
+                <dict>
+                    <key>BundleID</key>
+                    <string>com.apple.Safari</string>
+                    <key>Allowed</key>
+                    <true/>
+                </dict>
+                <dict>
+                    <key>BundleID</key>
+                    <string>com.microsoft.teams</string>
+                    <key>Allowed</key>
+                    <true/>
+                </dict>
+                <dict>
+                    <key>BundleID</key>
+                    <string>com.microsoft.Outlook</string>
+                    <key>Allowed</key>
+                    <true/>
+                </dict>
+                <dict>
+                    <key>BundleID</key>
+                    <string>com.microsoft.edgemac</string>
+                    <key>Allowed</key>
+                    <true/>
+                </dict>
+            </array>
+        </dict>
+        
+        <dict>
+            <key>PayloadDisplayName</key>
+            <string>Security and Privacy Preferences</string>
+            <key>PayloadIdentifier</key>
+            <string>com.company.security.privacy</string>
+            <key>PayloadType</key>
+            <string>com.apple.ManagedClient.preferences</string>
+            <key>PayloadUUID</key>
+            <string>REPLACE-WITH-UUID-2</string>
+            <key>PayloadVersion</key>
+            <integer>1</integer>
+            
+            <key>PayloadContentManagedPreferences</key>
+            <dict>
+                <key>com.apple.security.firewall</key>
+                <dict>
+                    <key>Forced</key>
+                    <array>
+                        <dict>
+                            <key>mcx_preference_settings</key>
+                            <dict>
+                                <key>EnableFirewall</key>
+                                <true/>
+                                <key>EnableStealthMode</key>
+                                <true/>
+                            </dict>
+                        </dict>
+                    </array>
+                </dict>
+            </dict>
+        </dict>
+    </array>
+    
+    <key>PayloadDescription</key>
+    <string>Configures macOS Application Firewall with corporate security policies</string>
+    <key>PayloadDisplayName</key>
+    <string>Corporate Firewall Configuration</string>
+    <key>PayloadIdentifier</key>
+    <string>com.company.firewall.profile</string>
+    <key>PayloadOrganization</key>
+    <string>Your Company Name</string>
+    <key>PayloadRemovalDisallowed</key>
+    <true/>
+    <key>PayloadScope</key>
+    <string>System</string>
+    <key>PayloadType</key>
+    <string>Configuration</string>
+    <key>PayloadUUID</key>
+    <string>REPLACE-WITH-MAIN-UUID</string>
+    <key>PayloadVersion</key>
+    <integer>1</integer>
+</dict>
+</plist>

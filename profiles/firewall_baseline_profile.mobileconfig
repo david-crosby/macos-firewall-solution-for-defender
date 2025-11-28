@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>PayloadContent</key>
+    <array>
+        <dict>
+            <key>PayloadDescription</key>
+            <string>Configures macOS Application Firewall baseline settings</string>
+            <key>PayloadDisplayName</key>
+            <string>Application Firewall</string>
+            <key>PayloadIdentifier</key>
+            <string>com.company.firewall.baseline</string>
+            <key>PayloadType</key>
+            <string>com.apple.security.firewall</string>
+            <key>PayloadUUID</key>
+            <string>GENERATE-NEW-UUID-HERE</string>
+            <key>PayloadVersion</key>
+            <integer>1</integer>
+            
+            <key>EnableFirewall</key>
+            <true/>
+            
+            <key>EnableStealthMode</key>
+            <true/>
+            
+            <key>BlockAllIncoming</key>
+            <false/>
+            
+            <key>EnableLogging</key>
+            <true/>
+            
+            <key>LoggingOption</key>
+            <string>detail</string>
+            
+            <key>AllowSignedEnabled</key>
+            <integer>1</integer>
+            
+            <key>AllowDownloadSignedEnabled</key>
+            <integer>1</integer>
+        </dict>
+    </array>
+    <key>PayloadDescription</key>
+    <string>Enforces Application Firewall baseline configuration for enterprise security</string>
+    <key>PayloadDisplayName</key>
+    <string>Firewall Baseline Configuration</string>
+    <key>PayloadIdentifier</key>
+    <string>com.company.profiles.firewall</string>
+    <key>PayloadOrganization</key>
+    <string>Your Company Name</string>
+    <key>PayloadRemovalDisallowed</key>
+    <true/>
+    <key>PayloadScope</key>
+    <string>System</string>
+    <key>PayloadType</key>
+    <string>Configuration</string>
+    <key>PayloadUUID</key>
+    <string>GENERATE-NEW-UUID-HERE</string>
+    <key>PayloadVersion</key>
+    <integer>1</integer>
+</dict>
+</plist>

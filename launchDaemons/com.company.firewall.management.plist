@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.company.firewall.management</string>
+    
+    <key>ProgramArguments</key>
+    <array>
+        <string>/usr/local/bin/firewall_management.sh</string>
+    </array>
+    
+    <key>StartInterval</key>
+    <integer>300</integer>
+    
+    <key>RunAtLoad</key>
+    <true/>
+    
+    <key>StandardOutPath</key>
+    <string>/var/log/firewall_management_stdout.log</string>
+    
+    <key>StandardErrorPath</key>
+    <string>/var/log/firewall_management_stderr.log</string>
+    
+    <key>WatchPaths</key>
+    <array>
+        <string>/Library/Preferences/com.apple.alf.plist</string>
+    </array>
+    
+    <key>QueueDirectories</key>
+    <array/>
+    
+    <key>KeepAlive</key>
+    <dict>
+        <key>SuccessfulExit</key>
+        <false/>
+    </dict>
+    
+    <key>ThrottleInterval</key>
+    <integer>60</integer>
+    
+    <key>Nice</key>
+    <integer>1</integer>
+    
+    <key>ProcessType</key>
+    <string>Background</string>
+    
+    <key>AbandonProcessGroup</key>
+    <true/>
+</dict>
+</plist>
