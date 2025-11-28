@@ -306,12 +306,6 @@ Future enhancements under consideration:
 - Network service detection (DNS, NTP, etc.)
 - Advanced threat detection integration
 
-## License
-
-Copyright (c) 2025 Your Company Name. All rights reserved.
-
-Internal use only. Not for distribution.
-
 ## Author
 
 **David Crosby (Bing)**
