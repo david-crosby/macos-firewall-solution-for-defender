@@ -457,10 +457,6 @@ tar czf firewall-support-$(hostname)-$(date +%Y%m%d).tar.gz \
 - Comprehensive logging and monitoring
 - Automated remediation workflows
 
-## License
-
-Copyright (c) 2025 Your Company Name. All rights reserved.
-
 ## Authors
 
 David Crosby (Bing)
