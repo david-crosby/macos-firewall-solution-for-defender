@@ -345,8 +345,6 @@ For 1000 devices with 5% non-compliance rate per month:
 - Manual remediation: 50 devices × 15 minutes = 12.5 hours/month
 - This solution: Automatic, ~0 hours/month
 
-**ROI**: Immediate time savings plus improved security posture.
-
 ---
 
 **Need help?** Review the full deployment guide in `docs/DEPLOYMENT_GUIDE.md`
