@@ -4,7 +4,6 @@
 # Determines if the device is on the corporate network
 # Returns: "corporate" or "external"
 
-setopt ERR_EXIT
 setopt NO_UNSET
 setopt PIPE_FAIL
 
@@ -22,8 +21,8 @@ log_message() {
         return 1
     fi
     
-    print -r "[$(date '+%Y-%m-%d %H:%M:%S')] [$level] $message" >> "$LOG_FILE" 2>/dev/null || {
-        print -u2 "[$(date '+%Y-%m-%d %H:%M:%S')] [ERROR] Failed to write to log file"
+    print -r "[$(date -u '+%Y-%m-%d %H:%M:%S UTC')] [$level] $message" >> "$LOG_FILE" 2>/dev/null || {
+        print -u2 "[$(date -u '+%Y-%m-%d %H:%M:%S UTC')] [ERROR] Failed to write to log file"
         return 1
     }
 }
