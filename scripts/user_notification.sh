@@ -1,16 +1,17 @@
-#!/bin/bash
+#!/bin/zsh
 
 # User Notification Script
 # Displays compliance alerts to users using swiftDialog
 
-set -euo pipefail
+setopt ERR_EXIT
+setopt NO_UNSET
+setopt PIPE_FAIL
 
-readonly SWIFTDIALOG_PATH="/usr/local/bin/dialog"
-readonly LOG_FILE="/var/log/firewall_management.log"
+typeset -r SWIFTDIALOG_PATH="/usr/local/bin/dialog"
+typeset -r LOG_FILE="/var/log/firewall_management.log"
 
-SWIFTDIALOG_INSTALLED=false
+typeset SWIFTDIALOG_INSTALLED=false
 
-# Consistent logging function
 log_message() {
     local level="${1:-INFO}"
     local message="${2:-}"
@@ -19,7 +20,7 @@ log_message() {
         return 1
     fi
     
-    printf '[%s] [%s] %s\n' "$(date '+%Y-%m-%d %H:%M:%S')" "$level" "$message" >> "$LOG_FILE" 2>/dev/null
+    print -r "[$(date '+%Y-%m-%d %H:%M:%S')] [$level] $message" >> "$LOG_FILE" 2>/dev/null
 }
 
 check_swiftdialog() {
@@ -35,8 +36,8 @@ check_swiftdialog() {
 
 get_current_user() {
     local current_user
-    current_user=$(stat -f "%Su" /dev/console 2>/dev/null || printf '%s\n' "")
-    printf '%s\n' "$current_user"
+    current_user=$(stat -f "%Su" /dev/console 2>/dev/null || print -r "")
+    print -r "$current_user"
 }
 
 get_notification_content() {
@@ -178,12 +179,12 @@ notify_user_remediation() {
 test_notification() {
     local test_status="${1:-firewall_disabled}"
     
-    printf '%s\n' "Testing notification for status: $test_status"
+    print -r "Testing notification for status: $test_status"
     check_swiftdialog
     show_notification "$test_status"
 }
 
-if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+if [[ "${ZSH_EVAL_CONTEXT}" == *:file ]]; then
     if [[ "${1:-}" == "test" ]]; then
         test_notification "${2:-firewall_disabled}"
     else

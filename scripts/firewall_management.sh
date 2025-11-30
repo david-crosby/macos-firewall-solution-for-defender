@@ -1,34 +1,32 @@
-#!/bin/bash
+#!/bin/zsh
 
 # Firewall Management Script
 # Manages macOS application firewall based on network location
 # Integrates with Microsoft Defender for Endpoint for compliance reporting
 
-set -euo pipefail
+setopt ERR_EXIT
+setopt NO_UNSET
+setopt PIPE_FAIL
 
-readonly SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-readonly LOG_FILE="/var/log/firewall_management.log"
-readonly STATE_FILE="/var/tmp/firewall_state.json"
-readonly LAST_LOCATION_FILE="/var/tmp/last_network_location"
-readonly SOCKETFILTER="/usr/libexec/ApplicationFirewall/socketfilterfw"
+typeset -r SCRIPT_DIR="${0:a:h}"
+typeset -r LOG_FILE="/var/log/firewall_management.log"
+typeset -r STATE_FILE="/var/tmp/firewall_state.json"
+typeset -r LAST_LOCATION_FILE="/var/tmp/last_network_location"
+typeset -r SOCKETFILTER="/usr/libexec/ApplicationFirewall/socketfilterfw"
 
-# Check dependencies
 if [[ ! -f "${SCRIPT_DIR}/network_detection.sh" ]]; then
-    printf '[%s] [ERROR] network_detection.sh not found\n' "$(date '+%Y-%m-%d %H:%M:%S')" >&2
+    print -u2 "[$(date '+%Y-%m-%d %H:%M:%S')] [ERROR] network_detection.sh not found"
     exit 1
 fi
 
 if [[ ! -f "${SCRIPT_DIR}/firewall_rules.sh" ]]; then
-    printf '[%s] [ERROR] firewall_rules.sh not found\n' "$(date '+%Y-%m-%d %H:%M:%S')" >&2
+    print -u2 "[$(date '+%Y-%m-%d %H:%M:%S')] [ERROR] firewall_rules.sh not found"
     exit 1
 fi
 
-# shellcheck source=/dev/null
 source "${SCRIPT_DIR}/network_detection.sh"
-# shellcheck source=/dev/null
 source "${SCRIPT_DIR}/firewall_rules.sh"
 
-# Consistent logging function
 log_message() {
     local level="${1:-INFO}"
     local message="${2:-}"
@@ -37,7 +35,7 @@ log_message() {
         return 1
     fi
     
-    printf '[%s] [%s] %s\n' "$(date '+%Y-%m-%d %H:%M:%S')" "$level" "$message" | tee -a "$LOG_FILE" >/dev/null 2>&1
+    print -r "[$(date '+%Y-%m-%d %H:%M:%S')] [$level] $message" | tee -a "$LOG_FILE" >/dev/null 2>&1
 }
 
 ensure_firewall_enabled() {
@@ -118,7 +116,7 @@ get_current_firewall_apps() {
         return 1
     fi
     
-    printf '%s\n' "$apps" | grep -v "^$" | grep -v "Firewall" | grep -v "ALF" | awk '{print $3}' | sort
+    print -r "$apps" | grep -v "^$" | grep -v "Firewall" | grep -v "ALF" | awk '{print $3}' | sort
 }
 
 clear_all_firewall_rules() {
@@ -130,11 +128,11 @@ clear_all_firewall_rules() {
         return 1
     fi
     
-    while IFS= read -r app; do
+    print -r "$apps" | while IFS= read -r app; do
         if [[ -n "$app" ]] && [[ -f "$app" ]]; then
             "$SOCKETFILTER" --remove "$app" >/dev/null 2>&1 || true
         fi
-    done <<< "$apps"
+    done
     
     return 0
 }
@@ -163,7 +161,7 @@ apply_firewall_rules() {
     local added_count=0
     local failed_count=0
     
-    while IFS= read -r app; do
+    print -r "$allowed_apps" | while IFS= read -r app; do
         [[ -z "$app" ]] && continue
         
         if [[ -f "$app" ]]; then
@@ -177,16 +175,14 @@ apply_firewall_rules() {
         else
             log_message "DEBUG" "Application not found, skipping: $app"
         fi
-    done <<< "$allowed_apps"
+    done
     
     log_message "INFO" "Firewall rules applied: $added_count added, $failed_count failed"
     
-    if [[ -v BUILTIN_SERVICES[@] ]]; then
-        for service in "${BUILTIN_SERVICES[@]}"; do
-            "$SOCKETFILTER" --add "$service" >/dev/null 2>&1 || true
-            "$SOCKETFILTER" --unblockapp "$service" >/dev/null 2>&1 || true
-        done
-    fi
+    for service in "${BUILTIN_SERVICES[@]}"; do
+        "$SOCKETFILTER" --add "$service" >/dev/null 2>&1 || true
+        "$SOCKETFILTER" --unblockapp "$service" >/dev/null 2>&1 || true
+    done
     
     return 0
 }
@@ -205,7 +201,7 @@ check_unsigned_apps() {
     if unsigned_attempts=$(grep -i "unsigned" "$firewall_log" 2>/dev/null | tail -20); then
         if [[ -n "$unsigned_attempts" ]]; then
             log_message "WARNING" "Unsigned application connection attempts detected"
-            printf '%s\n' "$unsigned_attempts" >> "${LOG_FILE}.unsigned_apps"
+            print -r "$unsigned_attempts" >> "${LOG_FILE}.unsigned_apps"
             return 1
         fi
     fi
@@ -218,11 +214,11 @@ get_firewall_state() {
     
     if ! state=$("$SOCKETFILTER" --getglobalstate 2>/dev/null | awk '{print $NF}' | tr -d '.'); then
         log_message "ERROR" "Failed to get firewall state"
-        printf '%s\n' "unknown"
+        print -r "unknown"
         return 1
     fi
     
-    printf '%s\n' "$state"
+    print -r "$state"
     return 0
 }
 
@@ -247,10 +243,10 @@ verify_rules_compliance() {
     fi
     
     local expected_count
-    expected_count=$(printf '%s\n' "$expected_apps" | grep -c "." || printf '%s\n' "0")
+    expected_count=$(print -r "$expected_apps" | grep -c "." || print -r "0")
     
     local current_count
-    current_count=$(printf '%s\n' "$current_apps" | grep -c "." || printf '%s\n' "0")
+    current_count=$(print -r "$current_apps" | grep -c "." || print -r "0")
     
     if [[ "$current_count" -lt "$expected_count" ]]; then
         log_message "WARNING" "Rule count mismatch: Expected $expected_count, Found $current_count"
@@ -271,10 +267,10 @@ save_state() {
     fi
     
     local hostname
-    hostname=$(hostname 2>/dev/null || printf '%s\n' "unknown")
+    hostname=$(hostname 2>/dev/null || print -r "unknown")
     
     local serial
-    serial=$(system_profiler SPHardwareDataType 2>/dev/null | awk '/Serial Number/ {print $4}' || printf '%s\n' "unknown")
+    serial=$(system_profiler SPHardwareDataType 2>/dev/null | awk '/Serial Number/ {print $4}' || print -r "unknown")
     
     cat > "$STATE_FILE" <<EOF
 {
@@ -305,13 +301,13 @@ check_location_change() {
     fi
     
     if [[ -f "$LAST_LOCATION_FILE" ]]; then
-        last_location=$(cat "$LAST_LOCATION_FILE" 2>/dev/null || printf '%s\n' "")
+        last_location=$(cat "$LAST_LOCATION_FILE" 2>/dev/null || print -r "")
     fi
     
     if [[ "$current_location" != "$last_location" ]]; then
         log_message "INFO" "Network location changed: $last_location -> $current_location"
         
-        if ! printf '%s\n' "$current_location" > "$LAST_LOCATION_FILE"; then
+        if ! print -r "$current_location" > "$LAST_LOCATION_FILE"; then
             log_message "ERROR" "Failed to save location to file"
             return 1
         fi
@@ -384,13 +380,11 @@ main() {
         remediate_firewall "$location"
         
         if [[ -f "${SCRIPT_DIR}/mde_reporting.sh" ]]; then
-            # shellcheck source=/dev/null
             source "${SCRIPT_DIR}/mde_reporting.sh"
             send_mde_signal "$compliance_status" "$location"
         fi
         
         if [[ -f "${SCRIPT_DIR}/user_notification.sh" ]]; then
-            # shellcheck source=/dev/null
             source "${SCRIPT_DIR}/user_notification.sh"
             notify_user_remediation "$compliance_status"
         fi
@@ -399,7 +393,6 @@ main() {
     save_state "$location" "$firewall_state" "$compliance_status"
     
     if [[ -f "${SCRIPT_DIR}/mde_reporting.sh" ]]; then
-        # shellcheck source=/dev/null
         source "${SCRIPT_DIR}/mde_reporting.sh"
         send_mde_signal "compliant" "$location"
     fi
@@ -407,6 +400,6 @@ main() {
     log_message "INFO" "Firewall management check completed"
 }
 
-if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+if [[ "${ZSH_EVAL_CONTEXT}" == *:file ]]; then
     main "$@"
 fi

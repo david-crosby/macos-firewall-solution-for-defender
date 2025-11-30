@@ -1,16 +1,17 @@
-#!/bin/bash
+#!/bin/zsh
 
 # Microsoft Defender for Endpoint Custom Signal Reporting
 # Sends firewall compliance signals to MDE for centralised monitoring
 
-set -euo pipefail
+setopt ERR_EXIT
+setopt NO_UNSET
+setopt PIPE_FAIL
 
-readonly MDE_CONFIG_FILE="/Library/Application Support/Microsoft/Defender/mde_config.json"
-readonly LOG_FILE="/var/log/firewall_management.log"
-readonly MDE_SIGNAL_LOG="/var/log/mde_signals.log"
-readonly MDE_ALERT_LOG="/var/log/mde_alerts.log"
+typeset -r MDE_CONFIG_FILE="/Library/Application Support/Microsoft/Defender/mde_config.json"
+typeset -r LOG_FILE="/var/log/firewall_management.log"
+typeset -r MDE_SIGNAL_LOG="/var/log/mde_signals.log"
+typeset -r MDE_ALERT_LOG="/var/log/mde_alerts.log"
 
-# Consistent logging function
 log_message() {
     local level="${1:-INFO}"
     local message="${2:-}"
@@ -19,21 +20,21 @@ log_message() {
         return 1
     fi
     
-    printf '[%s] [%s] %s\n' "$(date '+%Y-%m-%d %H:%M:%S')" "$level" "$message" >> "$LOG_FILE" 2>/dev/null
+    print -r "[$(date '+%Y-%m-%d %H:%M:%S')] [$level] $message" >> "$LOG_FILE" 2>/dev/null
 }
 
 get_device_info() {
     local serial_number
-    serial_number=$(system_profiler SPHardwareDataType 2>/dev/null | awk '/Serial Number/ {print $4}' || printf '%s\n' "unknown")
+    serial_number=$(system_profiler SPHardwareDataType 2>/dev/null | awk '/Serial Number/ {print $4}' || print -r "unknown")
     
     local hostname
-    hostname=$(hostname 2>/dev/null || printf '%s\n' "unknown")
+    hostname=$(hostname 2>/dev/null || print -r "unknown")
     
     local os_version
-    os_version=$(sw_vers -productVersion 2>/dev/null || printf '%s\n' "unknown")
+    os_version=$(sw_vers -productVersion 2>/dev/null || print -r "unknown")
     
     local current_user
-    current_user=$(stat -f "%Su" /dev/console 2>/dev/null || printf '%s\n' "unknown")
+    current_user=$(stat -f "%Su" /dev/console 2>/dev/null || print -r "unknown")
     
     cat <<EOF
 {
@@ -51,19 +52,19 @@ get_severity_level() {
     
     case "$compliance_status" in
         "firewall_disabled")
-            printf '%s\n' "High"
+            print -r "High"
             ;;
         "rule_violation")
-            printf '%s\n' "Medium"
+            print -r "Medium"
             ;;
         "unsigned_app_detected")
-            printf '%s\n' "Low"
+            print -r "Low"
             ;;
         "location_mismatch"|"compliant")
-            printf '%s\n' "Informational"
+            print -r "Informational"
             ;;
         *)
-            printf '%s\n' "Informational"
+            print -r "Informational"
             ;;
     esac
 }
@@ -73,22 +74,22 @@ get_signal_name() {
     
     case "$compliance_status" in
         "firewall_disabled")
-            printf '%s\n' "macOS.Firewall.Disabled"
+            print -r "macOS.Firewall.Disabled"
             ;;
         "rule_violation")
-            printf '%s\n' "macOS.Firewall.RuleViolation"
+            print -r "macOS.Firewall.RuleViolation"
             ;;
         "unsigned_app_detected")
-            printf '%s\n' "macOS.Firewall.UnsignedAppBlocked"
+            print -r "macOS.Firewall.UnsignedAppBlocked"
             ;;
         "location_mismatch")
-            printf '%s\n' "macOS.Firewall.LocationMismatch"
+            print -r "macOS.Firewall.LocationMismatch"
             ;;
         "compliant")
-            printf '%s\n' "macOS.Firewall.Compliant"
+            print -r "macOS.Firewall.Compliant"
             ;;
         *)
-            printf '%s\n' "macOS.Firewall.Unknown"
+            print -r "macOS.Firewall.Unknown"
             ;;
     esac
 }
@@ -157,7 +158,7 @@ send_mde_signal() {
     payload=$(create_mde_payload "$compliance_status" "$location" "$device_info")
     
     local signal_file="/tmp/mde_signal_$(date +%s).json"
-    printf '%s\n' "$payload" > "$signal_file"
+    print -r "$payload" > "$signal_file"
     
     log_message "INFO" "MDE Signal created: $(get_signal_name "$compliance_status") with severity $(get_severity_level "$compliance_status")"
     
@@ -167,7 +168,7 @@ send_mde_signal() {
         log_message "WARNING" "Failed to trigger MDE diagnostic collection"
     fi
     
-    printf '%s\n' "$payload" >> "$MDE_SIGNAL_LOG"
+    print -r "$payload" >> "$MDE_SIGNAL_LOG"
     
     rm -f "$signal_file"
     
@@ -201,7 +202,7 @@ send_mde_alert() {
 EOF
 )
     
-    printf '%s\n' "$alert_payload" >> "$MDE_ALERT_LOG"
+    print -r "$alert_payload" >> "$MDE_ALERT_LOG"
     
     return 0
 }
@@ -210,7 +211,7 @@ test_mde_integration() {
     log_message "INFO" "Testing MDE integration"
     
     if ! check_mde_installed; then
-        printf '%s\n' "ERROR: Microsoft Defender not installed or not running" >&2
+        print -u2 "ERROR: Microsoft Defender not installed or not running"
         return 1
     fi
     
@@ -226,14 +227,14 @@ test_mde_integration() {
 EOF
 )
     
-    printf '%s\n' "$test_payload" >> "$MDE_SIGNAL_LOG"
-    printf '%s\n' "Test signal logged to $MDE_SIGNAL_LOG"
-    printf '%s\n' "Check Microsoft Defender Security Center for custom detections"
+    print -r "$test_payload" >> "$MDE_SIGNAL_LOG"
+    print -r "Test signal logged to $MDE_SIGNAL_LOG"
+    print -r "Check Microsoft Defender Security Center for custom detections"
     
     return 0
 }
 
-if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+if [[ "${ZSH_EVAL_CONTEXT}" == *:file ]]; then
     if [[ "${1:-}" == "test" ]]; then
         test_mde_integration
     else

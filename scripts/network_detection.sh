@@ -1,18 +1,19 @@
-#!/bin/bash
+#!/bin/zsh
 
 # Network Detection Library
 # Determines if the device is on the corporate network
 # Returns: "corporate" or "external"
 
-set -euo pipefail
+setopt ERR_EXIT
+setopt NO_UNSET
+setopt PIPE_FAIL
 
 # Configuration variables - Update these for your environment
-readonly CORPORATE_SSIDS=("CorpWiFi" "CorpGuest" "CorpSecure")
-readonly CORPORATE_SUBNETS=("10.0.0.0/8" "172.16.0.0/12" "192.168.0.0/16")
-readonly CORPORATE_DNS_SUFFIX="corp.internal"
-readonly LOG_FILE="/var/log/firewall_management.log"
+typeset -ar CORPORATE_SSIDS=("CorpWiFi" "CorpGuest" "CorpSecure")
+typeset -ar CORPORATE_SUBNETS=("10.0.0.0/8" "172.16.0.0/12" "192.168.0.0/16")
+typeset -r CORPORATE_DNS_SUFFIX="corp.internal"
+typeset -r LOG_FILE="/var/log/firewall_management.log"
 
-# Consistent logging function
 log_message() {
     local level="$1"
     local message="$2"
@@ -21,13 +22,12 @@ log_message() {
         return 1
     fi
     
-    printf '[%s] [%s] %s\n' "$(date '+%Y-%m-%d %H:%M:%S')" "$level" "$message" >> "$LOG_FILE" 2>/dev/null || {
-        printf '[%s] [ERROR] Failed to write to log file\n' "$(date '+%Y-%m-%d %H:%M:%S')" >&2
+    print -r "[$(date '+%Y-%m-%d %H:%M:%S')] [$level] $message" >> "$LOG_FILE" 2>/dev/null || {
+        print -u2 "[$(date '+%Y-%m-%d %H:%M:%S')] [ERROR] Failed to write to log file"
         return 1
     }
 }
 
-# Check if VPN is active
 check_vpn_status() {
     local vpn_status
     
@@ -36,7 +36,7 @@ check_vpn_status() {
         return 1
     fi
     
-    if printf '%s\n' "$vpn_status" | grep -q "Connected"; then
+    if print -r "$vpn_status" | grep -q "Connected"; then
         log_message "INFO" "VPN connection detected"
         return 0
     fi
@@ -44,7 +44,6 @@ check_vpn_status() {
     return 1
 }
 
-# Check if connected to corporate SSID
 check_corporate_ssid() {
     local current_ssid
     local airport_path="/System/Library/PrivateFrameworks/Apple80211.framework/Resources/airport"
@@ -75,7 +74,64 @@ check_corporate_ssid() {
     return 1
 }
 
-# Check if IP address is in corporate subnet
+ip_to_int() {
+    local ip="$1"
+    local -a octets
+    
+    octets=(${(s:.:)ip})
+    
+    if [[ ${#octets[@]} -ne 4 ]]; then
+        return 1
+    fi
+    
+    local result=0
+    result=$(( (octets[1] << 24) + (octets[2] << 16) + (octets[3] << 8) + octets[4] ))
+    print -r "$result"
+    return 0
+}
+
+check_ip_in_subnet() {
+    local ip="$1"
+    local subnet="$2"
+    
+    if [[ -z "${ip:-}" ]] || [[ -z "${subnet:-}" ]]; then
+        return 1
+    fi
+    
+    local network_part="${subnet%/*}"
+    local prefix_length="${subnet#*/}"
+    
+    if [[ "$network_part" == "$subnet" ]]; then
+        return 1
+    fi
+    
+    if [[ ! "$prefix_length" =~ ^[0-9]+$ ]] || (( prefix_length < 0 || prefix_length > 32 )); then
+        return 1
+    fi
+    
+    local ip_int network_int mask
+    
+    if ! ip_int=$(ip_to_int "$ip"); then
+        return 1
+    fi
+    
+    if ! network_int=$(ip_to_int "$network_part"); then
+        return 1
+    fi
+    
+    mask=$(( 0xFFFFFFFF << (32 - prefix_length) ))
+    mask=$(( mask & 0xFFFFFFFF ))
+    
+    local ip_network=$(( ip_int & mask ))
+    local subnet_network=$(( network_int & mask ))
+    
+    if (( ip_network == subnet_network )); then
+        return 0
+    fi
+    
+    return 1
+}
+
 check_corporate_subnet() {
     local ip_addresses
     local ip
@@ -105,36 +161,6 @@ check_corporate_subnet() {
     return 1
 }
 
-# Helper function to check if IP is in subnet
-check_ip_in_subnet() {
-    local ip="$1"
-    local subnet="$2"
-    
-    if [[ -z "${ip:-}" ]] || [[ -z "${subnet:-}" ]]; then
-        return 1
-    fi
-    
-    if ! command -v python3 &>/dev/null; then
-        log_message "ERROR" "Python 3 not found for subnet checking"
-        return 1
-    fi
-    
-    python3 -c "
-import ipaddress
-import sys
-try:
-    if ipaddress.ip_address('$ip') in ipaddress.ip_network('$subnet', strict=False):
-        sys.exit(0)
-    else:
-        sys.exit(1)
-except Exception:
-    sys.exit(1)
-" 2>/dev/null
-    
-    return $?
-}
-
-# Check DNS suffix
 check_dns_suffix() {
     local dns_domain
     
@@ -157,36 +183,34 @@ check_dns_suffix() {
     return 1
 }
 
-# Main detection function
 detect_network_location() {
     log_message "INFO" "Starting network location detection"
     
     if check_vpn_status; then
-        printf '%s\n' "corporate"
+        print -r "corporate"
         return 0
     fi
     
     if check_corporate_ssid; then
-        printf '%s\n' "corporate"
+        print -r "corporate"
         return 0
     fi
     
     if check_corporate_subnet; then
-        printf '%s\n' "corporate"
+        print -r "corporate"
         return 0
     fi
     
     if check_dns_suffix; then
-        printf '%s\n' "corporate"
+        print -r "corporate"
         return 0
     fi
     
     log_message "INFO" "External network detected"
-    printf '%s\n' "external"
+    print -r "external"
     return 0
 }
 
-# Execute detection if run directly
-if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+if [[ "${ZSH_EVAL_CONTEXT}" == *:file ]]; then
     detect_network_location
 fi
