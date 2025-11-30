@@ -1,0 +1,110 @@
+###########################
+# macOS System Files
+###########################
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Icon must end with two \r
+Icon
+
+# Thumbnails
+._*
+
+# macOS metadata
+.Spotlight-V100
+.Trashes
+
+# Files that may appear on external drives
+.fseventsd
+.TemporaryItems
+.apdisk
+
+
+###########################
+# Shell / Scripting Artifacts
+###########################
+
+# zsh dumped history / completions
+.zsh_history
+.zsh_sessions/
+.zcompdump*
+zcompdump*
+
+# Any temporary runtime artifacts
+*.swp
+*.swo
+*.tmp
+*.bak
+*.backup
+*.cache
+*.log
+nohup.out
+
+
+###########################
+# Build / Packaging
+###########################
+
+# Packages or archives (if you build .pkg/.zip for distribution)
+*.pkg
+*.mpkg
+*.dmg
+*.zip
+*.tar
+*.tar.gz
+*.tgz
+*.tar.xz
+
+# Payload or expanded pkgs (PkgBuild / productbuild)
+build/
+dist/
+Root/
+
+
+###########################
+# Editor / IDE Files
+###########################
+
+# VS Code
+.vscode/
+.history/
+
+# JetBrains
+.idea/
+*.iml
+
+# BBEdit / Sublime / Nova / TextMate
+*.bbprojectd
+*.sublime-project
+*.sublime-workspace
+*.tmproj
+
+
+###########################
+# Python (if used for helper scripts)
+###########################
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv/
+env/
+venv/
+
+
+###########################
+# Miscellaneous
+###########################
+# Logs outside project root
+/var/log/*.log
+
+# Local environment overrides
+.env
+*.local
+
+# Any secret or machine-specific config
+*.key
+*.cert
+*.pem
+config.local
