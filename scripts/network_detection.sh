@@ -7,11 +7,14 @@
 setopt NO_UNSET
 setopt PIPE_FAIL
 
-# Configuration variables - Update these for your environment
 typeset -ar CORPORATE_SSIDS=("CorpWiFi" "CorpGuest" "CorpSecure")
 typeset -ar CORPORATE_SUBNETS=("10.0.0.0/8" "172.16.0.0/12" "192.168.0.0/16")
 typeset -r CORPORATE_DNS_SUFFIX="corp.internal"
 typeset -r LOG_FILE="/var/log/firewall_management.log"
+
+if [[ ! -w "$LOG_FILE" ]] && [[ ! -w "$(dirname "$LOG_FILE")" ]]; then
+    print -u2 "[$(date -u '+%Y-%m-%d %H:%M:%S UTC')] [WARNING] Cannot write to log file: $LOG_FILE"
+fi
 
 log_message() {
     local level="$1"
@@ -34,8 +37,8 @@ check_vpn_status() {
         log_message "DEBUG" "Failed to query VPN status"
         return 1
     fi
-    
-    if print -r "$vpn_status" | grep -q "Connected"; then
+
+    if print -r "$vpn_status" | grep -qE '^\s*\([0-9]+\).*Connected'; then
         log_message "INFO" "VPN connection detected"
         return 0
     fi
@@ -51,8 +54,8 @@ check_corporate_ssid() {
         log_message "DEBUG" "Airport utility not found"
         return 1
     fi
-    
-    if ! current_ssid=$("$airport_path" -I 2>/dev/null | awk -F: '/ SSID:/ {print $2}' | tr -d ' '); then
+
+    if ! current_ssid=$("$airport_path" -I 2>/dev/null | awk -F: '/^ *SSID:/ {print $2}' | tr -d ' '); then
         log_message "DEBUG" "Failed to query WiFi status"
         return 1
     fi
@@ -91,7 +94,7 @@ ip_to_int() {
     done
 
     local result=0
-    result=$(( (octets[1] << 24) + (octets[2] << 16) + (octets[3] << 8) + octets[4] ))    
+    result=$( (octets[1] << 24) + (octets[2] << 16) + (octets[3] << 8) + octets[4] ))
     print -r "$result"
     
     return 0
@@ -111,8 +114,9 @@ check_ip_in_subnet() {
     if [[ "$network_part" == "$subnet" ]]; then
         return 1
     fi
-    
-    if [[ ! "$prefix_length" =~ ^[0-9]+$ ]] || (( prefix_length < 0 || prefix_length > 32 )); then
+
+    # Validate prefix length (1-32 for IPv4, excluding 0 to avoid undefined shift behavior)
+    if [[ ! "$prefix_length" =~ ^[0-9]+$ ]] || (( prefix_length < 1 || prefix_length > 32 )); then
         return 1
     fi
     
@@ -180,8 +184,9 @@ check_dns_suffix() {
         log_message "DEBUG" "No DNS domain found"
         return 1
     fi
-    
-    if [[ "$dns_domain" == *"$CORPORATE_DNS_SUFFIX"* ]]; then
+
+    # Match exact domain or proper subdomain (prevents matching "corp.internal.malicious.com")
+    if [[ "$dns_domain" == "$CORPORATE_DNS_SUFFIX" ]] || [[ "$dns_domain" == *".$CORPORATE_DNS_SUFFIX" ]]; then
         log_message "INFO" "Corporate DNS suffix detected: $dns_domain"
         return 0
     fi
