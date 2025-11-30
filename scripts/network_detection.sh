@@ -153,8 +153,8 @@ check_corporate_subnet() {
     local ip
     
     ip_addresses=$(networksetup -listallhardwareports 2>/dev/null | while read -r line; do
-        if [[ "$line" =~ '^Device: (.+)$' ]]; then
-            ipconfig getifaddr "$match[1]" 2>/dev/null
+        if [[ "$line" =~ ^Device:\ (.+)$ ]]; then
+            ipconfig getifaddr "${match[1]}" 2>/dev/null
         fi
     done | grep -v "127.0.0.1")       
     
