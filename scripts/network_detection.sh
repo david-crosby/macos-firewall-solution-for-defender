@@ -78,6 +78,11 @@ check_corporate_ssid() {
 
 ip_to_int() {
     local ip="$1"
+
+    if [[ -z "${ip:-}" ]]; then
+        return 1
+    fi
+
     local -a octets
     
     IFS='.' read -rA octets <<< "$ip"
@@ -88,13 +93,13 @@ ip_to_int() {
 
     local octet
     for octet in "${octets[@]}"; do
-        if [[ ! "$octet" =~ ^[0-9]+$ ]] || (( octet > 255 )); then
+        if [[ ! "$octet" =~ ^[0-9]+$ ]] || [[ "$octet" =~ ^0[0-9] ]] || (( octet > 255 )); then
             return 1
         fi
     done
 
     local result=0
-    result=$( (octets[1] << 24) + (octets[2] << 16) + (octets[3] << 8) + octets[4] ))
+    result=$(( (octets[1] << 24) + (octets[2] << 16) + (octets[3] << 8) + octets[4] ))
     print -r "$result"
     
     return 0
@@ -147,10 +152,11 @@ check_corporate_subnet() {
     local ip_addresses
     local ip
     
-    if ! ip_addresses=$(ifconfig 2>/dev/null | grep "inet " | grep -v "127.0.0.1" | awk '{print $2}'); then
-        log_message "DEBUG" "Failed to get IP addresses"
-        return 1
-    fi
+    ip_addresses=$(networksetup -listallhardwareports 2>/dev/null | while read -r line; do
+        if [[ "$line" =~ '^Device: (.+)$' ]]; then
+            ipconfig getifaddr "$match[1]" 2>/dev/null
+        fi
+    done | grep -v "127.0.0.1")       
     
     if [[ -z "$ip_addresses" ]]; then
         log_message "DEBUG" "No IP addresses found"
@@ -175,7 +181,9 @@ check_corporate_subnet() {
 check_dns_suffix() {
     local dns_domain
     
-    if ! dns_domain=$(scutil --dns 2>/dev/null | grep "domain" | head -1 | awk '{print $3}'); then
+    dns_domain=$(scutil --dns 2>/dev/null | grep "^  domain " | head -1 | awk '{print $3}')
+
+    if [[ $? -ne 0 ]]; then
         log_message "DEBUG" "Failed to query DNS"
         return 1
     fi
