@@ -77,11 +77,18 @@ ip_to_int() {
     local ip="$1"
     local -a octets
     
-    octets=(${(s:.:)ip})
+    IFS='.' read -rA octets <<< "$ip"
     
     if [[ ${#octets[@]} -ne 4 ]]; then
         return 1
     fi
+
+    local octet
+    for octet in "${octets[@]}"; do
+        if [[ ! "$octet" =~ ^[0-9]+$ ]] || (( octet > 255 )); then
+            return 1
+        fi
+    done
     
     local result=0
     result=$(( (octets[1] << 24) + (octets[2] << 16) + (octets[3] << 8) + octets[4] ))
