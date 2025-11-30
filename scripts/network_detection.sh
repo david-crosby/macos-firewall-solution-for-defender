@@ -89,10 +89,12 @@ ip_to_int() {
             return 1
         fi
     done
-    
+
     local result=0
     result=$(( (octets[1] << 24) + (octets[2] << 16) + (octets[3] << 8) + octets[4] ))
+    
     print -r "$result"
+    
     return 0
 }
 
